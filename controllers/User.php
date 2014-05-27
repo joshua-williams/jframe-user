@@ -32,7 +32,7 @@ namespace User\Controller{
 		}
 		
 		function login(){
-			$form = Loader::getForm('Login');
+			$form = Loader::get('User\Form\Login');
 			$this->assign('form', $form->render());
 		}
 		

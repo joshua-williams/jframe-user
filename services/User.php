@@ -9,6 +9,28 @@ namespace User\Service{
 	
 	class User extends \JFrame\Service{
 		
+		public function authenticate(Array $cond=array()){
+			$session = Session::getInstance();
+			$user = $session->get('user');
+			if(!$user = $session->get('user')){
+				return $this->setError(USER_ERROR_NOT_LOGGED_IN);
+			}
+			
+			if(!$cond) return $user;
+			if(isset($cond['group'])){
+				switch(gettype($cond['group'])){
+					case 'array':  $gps = $cond['group']; break;
+					default:
+						$gps = explode('|',$cond['group']);
+				}
+				
+				if(!in_array($user->prop('group_id'), $gps)){
+					return $this->setError(USER_ERROR_NOT_IN_GROUP);
+				}
+			}
+			return $user;
+		}
+		
 		function emailPasswordReset($email){
 			if(!$email) return $this->setError('Email address required');
 			$user = $this->db->loadObject("SELECT * FROM users WHERE email=:email", array('email'=>$email));
@@ -20,7 +42,7 @@ namespace User\Service{
 			$config = (object) App::getConfig('mail')->PHPMailer['default'];
 			
 			define('BR', chr(10));
-			define('BR2',chr(10).chr(10));
+			define('BR2',chr(10).chr(10)); 
 			
 			$body = "$user->first_name,".BR2;
 			$body.="A request has been submitted to recover a lost password from ".Config::application.BR2;
