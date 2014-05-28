@@ -2,6 +2,7 @@
 
 namespace User\Controller{
 	use \App;
+	use \Config;
 	use \JFrame\Loader;
 	use \JFrame\Session;
 	use \JFrame\Router;
@@ -33,7 +34,7 @@ namespace User\Controller{
 		
 		function login(){
 			$form = Loader::get('User\Form\Login');
-			$this->assign('form', $form->render());
+			$this->addForm($form, 'form');
 		}
 		
 		function forgotUsername(){

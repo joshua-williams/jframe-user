@@ -14,6 +14,9 @@
 		{% for i in response.messages %}{{i}}<br/>{% endfor %}
 		</p>
 	{% endif %}
-
+	
+	<script type="text/javascript">
+		user.facebook.init();
+	</script>
 	{{form|raw}}
 {% endblock %}

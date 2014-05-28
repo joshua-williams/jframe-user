@@ -10,3 +10,5 @@ CREATE TABLE users(
 	login_attempts INT(2),
 	`hash` VARCHAR(255)
 );
+
+INSERT INTO GROUPS (type_id, title) VALUES (1, 'webmaster'), (1, 'super-admin'), (1, 'admin')

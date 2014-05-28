@@ -3,6 +3,7 @@
 	<head>
 		<meta charset="UTF-8"/>
 		<title>{{application}} User</title>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 		<style>
 			*{
 				box-sizing: border-box;
@@ -84,14 +85,14 @@
 			}
 			{{head.styles | raw}}
 		</style>
-		{% for style in _css %}
-			<link rel="stylesheet" type="text/css" src="{{style}}"/>
-		{% endfor %}
-
-		{% for script in _js %}
-			<script type="text/javascript" src="{{script}}"></script>
-		{% endfor %}
 		
+		{{head.js|raw}}
+		
+		{%if head.scripts%}
+		<script type="text/javascript">
+			{{head.scripts|raw}}
+		</script>
+		{%endif%}
 	</head>
 	
 	<body>
