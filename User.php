@@ -3,7 +3,11 @@
 namespace User{
 	use \JFrame\RouteMap;
 	
-	class Module{
+	define('USER_ERROR_NOT_LOGGED_IN', 'The user is not logged in');
+	define('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
+	
+	class Module extends \JFrame\Module{
+		protected $events = array('BeforeRender');
 		
 		function getConfig(){
 			return array(
@@ -21,16 +25,6 @@ namespace User{
 				new RouteMap('user/recover-password/:hash', 'User', 'User', 'recoverPassword', 'recover-password', '.*'),
 			);
 		}
-		
-		function getEvents(){
-			return array(
-				'user.beforeRender',
-				'user.login.beforeRender',
-				'user.login.afterRender',
-
-			);
-		}
-		
 	}
 }
 ?>
