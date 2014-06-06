@@ -2,11 +2,11 @@ var user = {
 	facebook : {
 		init : function(){
   			window.fbAsyncInit = function() {
-	        FB.init({
-	          appId      : '{{facebook_app_id}}',
-	          xfbml      : true,
-	          version    : 'v2.0'
-	        });
+		        FB.init({
+		          appId      : '{{facebook_app_id}}',
+		          xfbml      : true,
+		          version    : 'v2.0'
+		        });
 	      };
 	
 	      (function(d, s, id){
@@ -20,11 +20,20 @@ var user = {
 	       $(function(){
 	       	
 	       });
-	       /**************** END user.facebook.init *****************************/
+		},
+		/**************** END user.facebook.init *****************************/
+		
+		checkLoginState : function(){
+			FB.getLoginStatus(function(response){
+				FB.api('/me', function(response){
+					console.log(response)
+				});
+			})
 		},
 		
+		onChangeLoginStatus : function(){
+			console.log(response);
+		}
 	},
 	
 }
-
-

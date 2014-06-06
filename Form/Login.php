@@ -12,7 +12,8 @@ namespace User\Form{
 		function __construct(){
 			parent::__construct();
 			$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
-			$user_js = str_replace('{{facebook_app_id}}', Config::facebook_app_id, $user_js);
+			$app_id = Config::get('user.config')->facebook_app_id;
+			$user_js = str_replace('{{facebook_app_id}}', $app_id, $user_js);
 			$this->addJS($user_js, TRUE);
 		}
 		

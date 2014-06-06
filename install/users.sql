@@ -1,5 +1,6 @@
 CREATE TABLE users(
 	user_id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+	fb_id VARCHAR(45),
 	first_name VARCHAR(45),
 	last_name VARCHAR(45),
 	email VARCHAR(255),
@@ -11,4 +12,4 @@ CREATE TABLE users(
 	`hash` VARCHAR(255)
 );
 
-INSERT INTO GROUPS (type_id, title) VALUES (1, 'webmaster'), (1, 'super-admin'), (1, 'admin')
+INSERT INTO groups (type_id, title) VALUES (1, 'webmaster'), (1, 'super-admin'), (1, 'admin')

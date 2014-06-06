@@ -3,8 +3,12 @@
 namespace User{
 	use \JFrame\RouteMap;
 	
-	define('USER_ERROR_NOT_LOGGED_IN', 'The user is not logged in');
-	define('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
+	DEFINE('USER_ERROR_NOT_LOGGED_IN', 'The user is not logged in');
+	DEFINE('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
+	DEFINE('USER_GT_ID', 1);
+	DEFINE('WEBMASTER_UGID', 1);
+	DEFINE('SUPER_ADMIN_UGID', 2);
+	DEFINE('ADMIN_UGID', 3);
 	
 	class Module extends \JFrame\Module{
 		protected $events = array('BeforeRender');
