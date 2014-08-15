@@ -11,10 +11,26 @@ namespace User\Form{
 		
 		function __construct(){
 			parent::__construct();
-			$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
-			$app_id = Config::get('user.config')->facebook_app_id;
-			$user_js = str_replace('{{facebook_app_id}}', $app_id, $user_js);
-			$this->addJS($user_js, TRUE);
+			$this->addFields(array(
+				array(
+					'type' => 'text',
+					'name' => 'email',
+					'label' => 'Username',
+					'placeholder' => 'myemail@address.com'
+				),
+				
+				array(
+					'type' => 'password',
+					'name' => 'passwd',
+					'label' => 'Password',
+					'placeholder' => 'Password'
+				),
+			));
+			
+			$this->addControl(array(
+				'type' => 'submit',
+				'label' => 'Login'
+			));
 		}
 		
 		function action(){

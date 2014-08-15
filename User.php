@@ -13,14 +13,14 @@ namespace User{
 	class Module extends \JFrame\Module{
 		protected $events = array('BeforeRender');
 		
-		function getConfig(){
+		public static function getConfig(){
 			return array(
 				'template_engine' => 'twig',
 				'default_template' => 'template',
 			);
 		}
 		
-		function getRoutes(){
+		public  function getRoutes(){
 			return array(
 				new RouteMap('user','User','User'),
 				new RouteMap('user/login','User','User','login'),

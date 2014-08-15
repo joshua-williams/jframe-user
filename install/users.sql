@@ -1,6 +1,5 @@
 CREATE TABLE users(
 	user_id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-	fb_id VARCHAR(45),
 	first_name VARCHAR(45),
 	last_name VARCHAR(45),
 	email VARCHAR(255),
