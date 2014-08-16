@@ -98,6 +98,7 @@ namespace User\Service{
 			
 		}
 		function login($email, $passwd){
+			if(!$email) return $this->response->setError('Please enter your username.');
 			if(!$passwd) return $this->response->setError('Please enter your password.');
 			$user = $this->getUserByEmail($email);
 			$time = date('Y-m-d H:i:s');

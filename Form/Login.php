@@ -36,7 +36,9 @@ namespace User\Form{
 		function action(){
 			$username = Vars::get('username');
 			$passwd = Vars::get('passwd');
-			if(!$username) return $this->response->setError('Username required');
+			$svc = Loader::get('User\Service\User');
+			$response = $svc->login($username, $passwd);
+			die('<xmp>'.print_r($response,1));
 		}
 	}
 }
