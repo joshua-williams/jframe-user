@@ -13,7 +13,7 @@ namespace User{
 	class Module extends \JFrame\Module{
 		protected $events = array('BeforeRender');
 		
-		function getConfig(){
+		public static function getConfig(){
 			return array(
 				'template_engine' => 'twig',
 				'default_template' => 'template',
