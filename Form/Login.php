@@ -2,7 +2,9 @@
 
 namespace User\Form{
 	use \JFrame\Vars;
+	use \JFrame\Loader;
 	use \Config;
+	use \App;
 	
 	class Login extends \JFrame\Form{
 		protected $class = 'login';
@@ -11,23 +13,22 @@ namespace User\Form{
 		
 		function __construct(){
 			parent::__construct();
-<<<<<<< HEAD
 			$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
 			$this->addJS($user_js, TRUE);
-=======
 			$this->addFields(array(
 				array(
 					'type' => 'text',
 					'name' => 'email',
 					'label' => 'Username',
-					'placeholder' => 'myemail@address.com'
+					'placeholder' => 'myemail@address.com',
 				),
 				
 				array(
 					'type' => 'password',
 					'name' => 'passwd',
 					'label' => 'Password',
-					'placeholder' => 'Password'
+					'placeholder' => 'Password',
+					'append_label' => '<a href="'.SITE_URL.'/user/forgor-password">Forgot Password?</a>',
 				),
 			));
 			
@@ -35,15 +36,20 @@ namespace User\Form{
 				'type' => 'submit',
 				'label' => 'Login'
 			));
->>>>>>> bb636056c0f4216c5874ce4a4e3face605fe42c7
 		}
 		
 		function action(){
-			$username = Vars::get('username');
+			$username = Vars::get('email');
 			$passwd = Vars::get('passwd');
 			$svc = Loader::get('User\Service\User');
-			$response = $svc->login($username, $passwd);
-			die('<xmp>'.print_r($response,1));
+			$this->response = $svc->login($username, $passwd);
+			if(!$this->response->getErrors()){
+				die('bad login');
+			}else{
+				App::dispatchEvent('User.login', $this->response);
+				die('<xmp>'.print_r($this->response,1));
+				die('login successful');
+			}
 		}
 	}
 }

@@ -88,15 +88,12 @@ namespace User\Service{
 			return $this->db->loadObjectList("
 				SELECT g.group_id, g.title AS `group`
 				FROM table_map m
-					INNER JOIN groups g ON g.group_id = m.group_id
-				WHERE m.gt_id = :USER_GT_ID
-					AND m.rel_id = :user_id
-				", array(
-					'USER_GT_ID' => USER_GT_ID,
-					'user_id' => $user_id
-				));
-			
+					INNER JOIN groups g ON g.group_id = m.rel_id
+				WHERE m.gt_id = :USER_GTID
+					AND m.src_id = :user_id
+			", array('user_id'=>$user_id, 'USER_GTID'=>USER_GTID));
 		}
+		
 		function login($email, $passwd){
 			if(!$email) return $this->response->setError('Please enter your username.');
 			if(!$passwd) return $this->response->setError('Please enter your password.');
@@ -133,7 +130,7 @@ namespace User\Service{
 			
 			$sess = Session::getInstance();
 			$sess->restart();
-			$user = Loader::get('SummerScrapbook\Model\User', (array) $user);
+			$user = Loader::get('User\Model\User', (array) $user);
 			$sess->set('user',$user->properties());
 			App::dispatchEvent('User.Login', false, $user);
 			return $this->response;

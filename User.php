@@ -6,19 +6,12 @@ namespace User{
 	DEFINE('USER_ERROR_NOT_LOGGED_IN', 'The user is not logged in');
 	DEFINE('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
 	DEFINE('USER_GTID', 1);
-	DEFINE('WEBMASTER_UGID', 1);
-	DEFINE('SUPER_ADMIN_UGID', 2);
-	DEFINE('ADMIN_UGID', 3);
+	IF(!DEFINED('WEBMASTER_UGID')) DEFINE('WEBMASTER_UGID', 1);
+	IF(!DEFINED('SUPER_ADMIN_UGID')) DEFINE('SUPER_ADMIN_UGID', 2);
+	IF(!DEFINED('ADMIN_UGID')) DEFINE('ADMIN_UGID', 3);
 	
 	class Module extends \JFrame\Module{
 		protected $events = array('BeforeRender');
-		
-		public static function getConfig(){
-			return array(
-				'template_engine' => 'twig',
-				'default_template' => 'template',
-			);
-		}
 		
 		public  function getRoutes(){
 			return array(
