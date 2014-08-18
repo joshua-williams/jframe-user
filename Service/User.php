@@ -1,117 +1,280 @@
 <?php
 
 namespace User\Service{
-	use \JFrame\Security;
-	use \JFrame\Router;
-	use \JFrame\Loader;
-	use \Config;
 	use \App;
+	use \Config;
+	use \Mandrill;
+	use \JFrame\Session;
+	use \JFrame\Loader;
 	
 	class User extends \JFrame\Service{
+		public $response;
+		public $has_error;
 		
-		public function authenticate(Array $cond=array()){
-			$session = Session::getInstance();
-			$user = $session->get('user');
-			if(!$user = $session->get('user')){
-				return $this->setError(USER_ERROR_NOT_LOGGED_IN);
+		function __construct(){
+			parent::__construct();
+			$this->response = Loader::get('JFrame\Response');
+		}
+		
+		function authorize($user_groups, $return=false){
+			$sess = Session::getInstance();
+			if(!$user = $sess->get('user')){
+				if(!$return) return false;
+				App::redirect($return);
 			}
 			
-			if(!$cond) return $user;
-			if(isset($cond['group'])){
-				switch(gettype($cond['group'])){
-					case 'array':  $gps = $cond['group']; break;
-					default:
-						$gps = explode('|',$cond['group']);
+			if(is_array($user_groups)){
+				foreach($user_groups as $group_id){
+					foreach($user['groups'] as $g){
+						if(in_array($g->group_id, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
+						if($g->group_id == $group_id) return $user;;
+					}
 				}
-				
-				if(!in_array($user->prop('group_id'), $gps)){
-					return $this->setError(USER_ERROR_NOT_IN_GROUP);
+			}elseif(is_string($user_groups)){
+				foreach($user['groups'] as $g){
+					if(in_array($user_groups, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
+					if($g->group_id == $user_groups) return $user;
 				}
 			}
-			return $user;
+			if(!$return) return false;
+			App::redirect($return);
+		}
+		
+		public function inGroup($groups){
+			$sess = Session::getInstance();
+			if(!$user = $sess->get('user')) return false;
+			if(is_array($groups)){
+				foreach($user['groups'] as $group){
+					foreach($groups as $_group){
+						if($group->group_id == $_group) return true;
+					}
+				}
+			}else{
+				foreach($user['groups'] as $group){
+					if($group->group_id == $groups) return true;
+				}
+			}
+			return false;
+		}
+		function getUser($user_id, $as_model=false){
+			$user = $this->db->loadObject("
+				SELECT u.*
+				FROM users u
+				WHERE u.user_id = :user_id
+			", array(
+				'user_id' => $user_id,
+			));
+			if(!$user) return false;
+			$user->groups = $this->getUserGroups($user_id);
+			if(!$as_model) return $user;
+			return Loader::get('User\Model\User', (array) $user);
+		}
+		
+		function getUserByEmail($email, $as_model=false){
+			$user = $this->db->loadObject("
+				SELECT u.*
+				FROM users u
+				WHERE u.email = :email
+			", array(
+				'email' => $email,
+			));
+			if(!$user) return false;
+			$user->groups = $this->getUserGroups($user->user_id);
+			if(!$as_model) return $user;
+			return Loader::get('User\Model\User', (array) $user);
+		}
+
+		function getUserGroups($user_id){
+			return $this->db->loadObjectList("
+				SELECT g.group_id, g.title AS `group`
+				FROM table_map m
+					INNER JOIN groups g ON g.group_id = m.group_id
+				WHERE m.gt_id = :USER_GT_ID
+					AND m.rel_id = :user_id
+				", array(
+					'USER_GT_ID' => USER_GT_ID,
+					'user_id' => $user_id
+				));
+			
+		}
+		function login($email, $passwd){
+			if(!$email) return $this->response->setError('Please enter your username.');
+			if(!$passwd) return $this->response->setError('Please enter your password.');
+			$user = $this->getUserByEmail($email);
+			$time = date('Y-m-d H:i:s');
+			if(!$user) return $this->response->setError('Invalid login attempt');
+			$config = Config::get('user.config');
+			if($user->login_attempts >= $config->max_login_attempts){
+				return $this->response->setError('You have made too many login attempts.');
+			}
+			$passwd = md5(Config::hash.$passwd);
+			if($user->passwd != $passwd){
+				$this->db->query("
+					UPDATE users SET login_attempts=:login_attempts, last_activity=:last_activity WHERE user_id=:user_id
+				", array(
+					'login_attempts' => $user->login_attempts + 1,
+					'last_activity' => $time,
+					'user_id' => $user->user_id
+				));
+				return $this->response->setError('Invalid login attempt');
+			}else{
+				$this->db->query("
+					UPDATE users SET 
+						last_login = :last_login,
+						login_attempts = 0, 
+						last_activity = :last_activity 
+					WHERE user_id=:user_id
+				", array(
+					'user_id' => $user->user_id,
+					'last_login' => $time,
+					'last_activity' => $time
+				));
+			}
+			
+			$sess = Session::getInstance();
+			$sess->restart();
+			$user = Loader::get('SummerScrapbook\Model\User', (array) $user);
+			$sess->set('user',$user->properties());
+			App::dispatchEvent('User.Login', false, $user);
+			return $this->response;
+		}
+		
+		function logout(){
+			$sess = Session::getInstance();
+			$sess->destroy();
+		}
+		
+		function register(UserModel $user, $passwd, $c_passwd){
+			$user = (object) $user->properties();
+			if(!$user->email) return $this->response->setError('Your email address is required.');
+			if(!$this->isValidEmail($user->email)) return $this->response->setError('Please enter a valid email address');
+			$emailExists = $this->db->loadResult("SELECT email FROM users WHERE email=:email",array('email'=>$user->email));
+			if($emailExists) return $this->response->setError('A user with that email address already exists.');
+			if(!$user->first_name) return $this->response->setError('Your first name is required.');
+			if(!$user->last_name) return $this->response->setError('Your last name is required.');
+			if(!$user->zip) return $this->response->setError('Your zip code is required.');
+			
+			if(!$passwd) return $this->response->setError('Please choose a password.');
+			if(!$c_passwd) return $this->response->setError('Please confirm your password.');
+			if($passwd != $c_passwd) $this->setError('Your password does not match.');
+			$passwd = md5(Config::hash.$passwd);
+			
+			$user_id = $this->db->query("
+				INSERT INTO users
+				(first_name, last_name, email, zip, phone, passwd)
+				VALUES
+				(:first_name, :last_name, :email, :zip, :phone, :passwd)
+			", array(
+				'first_name' => $user->first_name,
+				'last_name' => $user->last_name,
+				'email' => $user->email,
+				'zip' => $user->zip,
+				'phone' => $user->phone,
+				'passwd' => $passwd
+			));
+			if(!$user_id) return $this->response->setError("Sorry, we were unable to register your account.");
+			
+			$map_id = $this->db->query("
+				INSERT INTO table_map 
+					(gt_id, group_id, rel_id)
+				VALUES
+					(:USER_GT_ID, :SSB_UGID, :user_id)
+			", array(
+				'USER_GT_ID' => USER_GT_ID,
+				'SSB_UGID' => SSB_UGID,
+				'user_id' => $user_id
+			));
+			App::dispatchEvent('SummerScrapbook.Event.Register', (array)$user);
+			return $this->response;
 		}
 		
 		function emailPasswordReset($email){
-			if(!$email) return $this->setError('Email address required');
-			$user = $this->db->loadObject("SELECT * FROM users WHERE email=:email", array('email'=>$email));
-			if(!$user) return $this->setError('We are unable to match your email address with any users.');
-			$hash = Security::encrypt(Config::enc_key, time().'-'.$email);
-			$this->db->query("UPDATE users SET hash=:hash WHERE user_id=:user_id", array('hash'=>$hash,'user_id'=>$user->user_id));
-			$link = Config::site_url . '/user/recover-password/' . $hash;
+			if(!$email) return $this->response->setError('Please enter your email address');
+			$user = $this->db->loadObject("SELECT user_id, first_name, email FROM users WHERE email=:email",array('email'=>$email));
+			if(!$user) return $this->response->setError('Unable to find a user with this email address.');
+			$hash = Loader::get('JFrame\Security')->encrypt(Config::enc_key, time().'-'.$email);
 			
-			$config = (object) App::getConfig('mail')->PHPMailer['default'];
+			$this->db->query("UPDATE users SET hash = :hash WHERE user_id = :user_id", array(
+				'hash' => $hash,
+				'user_id' => $user->user_id
+			));
+			$html = file_get_contents(PATH.'/templates/Email/forgot_password/forgot_password.html');
+			$text = file_get_contents(PATH.'/templates/Email/forgot_password/forgot_password.txt');
 			
-			define('BR', chr(10));
-			define('BR2',chr(10).chr(10)); 
+			$pattern = '/({{name}})|({{link}})|({{application}})/';
+			$vars = array(
+				'application' => Config::application,
+				'name' => $user->first_name,
+				'link' => PUBLIC_URL . '/user/reset-password/'.$hash	
+			);
+			foreach($vars as $key=>$val){
+				$html = str_replace('{{'.$key.'}}', $val, $html);
+				$text = str_replace('{{'.$key.'}}', $val, $text);
+			}
 			
-			$body = "$user->first_name,".BR2;
-			$body.="A request has been submitted to recover a lost password from ".Config::application.BR2;
-			$body.="To complete the password change, please visit the following URL and enter the requested info:".BR2;
-			$body.=$link.BR2;
-			$body.="Passwords must be alphanumeric, at least 8 characters long.".BR2;
-			$body.="If you did not specifically request this password change, please disregard this notice.".BR2;
-			$body.="We are available 24/7. If you have any questions, comments, or concerns, please do not hesitate to contact us.".BR2;
-			$body.="Thank you,".BR;
-			$body.=Config::application;
-				
-			$mail = Loader::getModel('PHPMailer', array(
-				'host' => $config->host,
-				'port' => $config->port,
-				'username' => $config->username,
-				'password' => $config->password,
-				'subject' => Config::application . ' Password Reset Request',
-				'sender_name' => Config::application,
-				'text' => $body,
-			), 'Mail');
-			$mail->addRecipient($email, 'Joshua Williams');
-			return $mail->send() ? true : false;
+			require_once(PATH.'/vendor/mandrill/Mandrill.php');
+			$mandrill = new Mandrill('idcYcbKgBLGJXJZvfJhY9A');
+			$message = array(
+				'html' => $html,
+				'text' => $text,
+				'subject' => Config::application . ' Password Recovery',
+				'from_email' => 'ask-npf@nationalparks.org',
+				'from_name' => Config::application,
+				'to' => array(
+					array(
+						'email' => $user->email,
+						'name' => $user->first_name,
+						'type' => 'to'),
+					),
+				'track_opens' => true,
+				'tags' => array('ssb-recover-password'),
+				'async' => false,
+			);
+			$result = $mandrill->messages->send($message);
+			return $this->response->setSuccess('An email has been sent with instructions to recover your password.');
 		}
 		
-		function resetPassword(Array $params){
-			$params = (object) $params;
-			if(!$params->hash) return $this->setError('Invalid request.');
-			if(!$params->passwd) return $this->setError('Please enter a new password.');
-			if(!$params->c_passwd) return $this->setError('You password does not match.');
-			if(!$user_id = $this->validateHash($params->hash)){
-				return $this->setError('The page you requested has expired.');
-			}
-			if($params->passwd != $params->c_passwd){
-				return $this->setError('Your password does not match.');
-			}
-			$new_password = md5(Config::enc_key . $params->passwd);
-			$result = $this->db->query("
-				UPDATE users SET passwd = :password
-				WHERE user_id = :user_id
-					AND hash = :hash
-			", array(
-				'password' => $new_password,
-				'user_id' => $user_id,
-				'hash' => $params->hash
+		
+		function resetPassword($hash, $email, $passwd, $c_passwd){
+			if(!$hash || !$email || !$passwd || !$c_passwd) return false;
+			if($passwd != $c_passwd) return $this->response->setError('Your password does not match.');
+			$passwd = md5(Config::hash.$passwd);
+			$user = $this->db->loadObject("SELECT * FROM users WHERE hash=:hash", array('hash'=>$hash));
+			if(!$user) return false;
+			if($user->email != $email) return false;
+			$this->db->query("UPDATE users SET hash = NULL, passwd = :passwd WHERE user_id=:user_id", array(
+				'user_id'=>$user->user_id,
+				'passwd' => $passwd
 			));
-			if(!$result){
-				return $this->setError("We were unable to update your password");
-			}
 			return true;
 		}
 		
 		function validateHash($hash){
-			$user_id = $this->db->loadResult("
-				SELECT user_id FROM users
-				WHERE `hash`=:hash
-			", array('hash'=>$hash));
-			if(!$user_id) return false;
+			$user = $this->db->loadObject("SELECT * FROM users WHERE hash=:hash", array('hash'=>$hash));
+			if(!$user) return false;
+			$hash = Loader::get('JFrame\Security')->decrypt(Config::enc_key, $hash);
 			
-			$request_time = Security::decrypt(Config::enc_key, $hash);
-			$lapsed = (time() - $request_time) / 60;
+			preg_match('/([0-9]+)\-(.*)$/', $hash, $matches);
 			
-			if($lapsed > Config::password_recover_timeout) return false;
-			return $user_id;
- 		}
-		
-		
-		function getGroups(){
+			if(!$matches) return false;
 			
-		}		
+			if(count($matches) != 3) App::redirect(PUBLIC_URL.'/User/login');
+			
+			$time = $matches[1];
+			$email = $matches[2];
+			$minutes_lapsed = round((time() - $time) / 60);
+				
+			if($minutes_lapsed > Config::get('user.config')->password_recover_timeout){
+				return false;
+			}
+			if($email != $user->email) return false;
+			return true;
+		}
+		private function isValidEmail($email){
+			if(!filter_var($email, FILTER_VALIDATE_EMAIL)) return false;
+			if(!preg_match('/@.+\./', $email)) return false;
+			return true;
+		}
 	}
 }
 

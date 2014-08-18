@@ -5,7 +5,7 @@ namespace User{
 	
 	DEFINE('USER_ERROR_NOT_LOGGED_IN', 'The user is not logged in');
 	DEFINE('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
-	DEFINE('USER_GT_ID', 1);
+	DEFINE('USER_GTID', 1);
 	DEFINE('WEBMASTER_UGID', 1);
 	DEFINE('SUPER_ADMIN_UGID', 2);
 	DEFINE('ADMIN_UGID', 3);
@@ -20,7 +20,7 @@ namespace User{
 			);
 		}
 		
-		function getRoutes(){
+		public  function getRoutes(){
 			return array(
 				new RouteMap('user','User','User'),
 				new RouteMap('user/login','User','User','login'),
