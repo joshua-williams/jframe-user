@@ -5,6 +5,7 @@ namespace User\Model{
 	class User extends \JFrame\Model{
 		protected $first_name;
 		protected $last_name;
+		protected $created;
 		protected $email;
 		protected $groups;
 		

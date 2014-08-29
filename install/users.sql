@@ -7,6 +7,7 @@ CREATE TABLE users(
 	`status` enum('active','suspended','pending'),
 	last_login DATETIME,
 	last_activity DATETIME,
+	created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP(),
 	login_attempts INT(2),
 	`hash` VARCHAR(255)
 );

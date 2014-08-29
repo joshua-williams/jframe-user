@@ -6,6 +6,8 @@ namespace User\Service{
 	use \Mandrill;
 	use \JFrame\Session;
 	use \JFrame\Loader;
+	use \JFrame\Security;
+	use \User\Model\User AS UserModel;
 	
 	class User extends \JFrame\Service{
 		public $response;
@@ -56,6 +58,36 @@ namespace User\Service{
 			}
 			return false;
 		}
+		
+		function addUser(UserModel $user, $email=true){
+			$u = (object) $user->properties();
+			if(!$u->email) return $this->response->setError('Email address required');
+			if($this->getUserByEmail($u->email)){
+				return $this->response->setError(USER_ERROR_EXISTS);
+			}
+			if(!$u->first_name) return $this->response->setError('First name is required');
+			if(!$user->last_name) return $this->response->setError('Last name is required');
+			
+			$passwd = md5(Config::hash.Security::generateKey());
+			
+			$user_id = $this->db->query("
+				INSERT INTO users 
+					(email, first_name, last_name, passwd) 
+				VALUES 
+					(:email, :first_name, :last_name :passwd)
+			", array(
+				'email' => $u->email,
+				'first_name' => $u->first_name,
+				'last_name' => $u->last_name,
+				'passwd' => $passwd
+			));
+			
+			if(!$user_id) return $this->response->setError('Failed to create new user');
+			$user->prop('user_id'=>$user_id);
+			return $user;
+		}
+		
+		
 		function getUser($user_id, $as_model=false){
 			$user = $this->db->loadObject("
 				SELECT u.*
@@ -127,12 +159,12 @@ namespace User\Service{
 					'last_activity' => $time
 				));
 			}
-			
+
+			$user = Loader::get('User\Model\User', (array) $user);
 			$sess = Session::getInstance();
 			$sess->restart();
-			$user = Loader::get('User\Model\User', (array) $user);
 			$sess->set('user',$user->properties());
-			App::dispatchEvent('User.Login', false, $user);
+			App::dispatchEvent('User.Event.Login', $user, $this->response);
 			return $this->response;
 		}
 		

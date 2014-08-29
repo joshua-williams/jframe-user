@@ -43,13 +43,12 @@ namespace User\Form{
 			$passwd = Vars::get('passwd');
 			$svc = Loader::get('User\Service\User');
 			$this->response = $svc->login($username, $passwd);
-			if(!$this->response->getErrors()){
+			if($this->response->getErrors()){
 				die('bad login');
 			}else{
-				App::dispatchEvent('User.login', $this->response);
-				die('<xmp>'.print_r($this->response,1));
 				die('login successful');
 			}
+			exit;
 		}
 	}
 }
