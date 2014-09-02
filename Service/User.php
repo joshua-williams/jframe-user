@@ -6,8 +6,6 @@ namespace User\Service{
 	use \Mandrill;
 	use \JFrame\Session;
 	use \JFrame\Loader;
-	use \JFrame\Security;
-	use \User\Model\User AS UserModel;
 	
 	class User extends \JFrame\Service{
 		public $response;
@@ -42,9 +40,14 @@ namespace User\Service{
 			App::redirect($return);
 		}
 		
-		public function inGroup($groups){
-			$sess = Session::getInstance();
-			if(!$user = $sess->get('user')) return false;
+		public function inGroup($groups, $user=false){
+			if($user){
+				$user = (array) $user->properties();
+			}else{
+				$sess = Session::getInstance();
+				if(!$user = $sess->get('user')) return false;
+			}
+			
 			if(is_array($groups)){
 				foreach($user['groups'] as $group){
 					foreach($groups as $_group){
@@ -58,36 +61,6 @@ namespace User\Service{
 			}
 			return false;
 		}
-		
-		function addUser(UserModel $user, $email=true){
-			$u = (object) $user->properties();
-			if(!$u->email) return $this->response->setError('Email address required');
-			if($this->getUserByEmail($u->email)){
-				return $this->response->setError(USER_ERROR_EXISTS);
-			}
-			if(!$u->first_name) return $this->response->setError('First name is required');
-			if(!$user->last_name) return $this->response->setError('Last name is required');
-			
-			$passwd = md5(Config::hash.Security::generateKey());
-			
-			$user_id = $this->db->query("
-				INSERT INTO users 
-					(email, first_name, last_name, passwd) 
-				VALUES 
-					(:email, :first_name, :last_name :passwd)
-			", array(
-				'email' => $u->email,
-				'first_name' => $u->first_name,
-				'last_name' => $u->last_name,
-				'passwd' => $passwd
-			));
-			
-			if(!$user_id) return $this->response->setError('Failed to create new user');
-			$user->prop('user_id'=>$user_id);
-			return $user;
-		}
-		
-		
 		function getUser($user_id, $as_model=false){
 			$user = $this->db->loadObject("
 				SELECT u.*
@@ -107,7 +80,7 @@ namespace User\Service{
 				SELECT u.*
 				FROM users u
 				WHERE u.email = :email
-			", array(
+			", array( 
 				'email' => $email,
 			));
 			if(!$user) return false;
@@ -123,9 +96,28 @@ namespace User\Service{
 					INNER JOIN groups g ON g.group_id = m.rel_id
 				WHERE m.gt_id = :USER_GTID
 					AND m.src_id = :user_id
-			", array('user_id'=>$user_id, 'USER_GTID'=>USER_GTID));
+			", array('user_id'=>$user_id, 'USER_GTID'=>USER_GTID)); 
 		}
 		
+		function addUserToGroup($user_id, $group_id){
+			if(!$user = $this->getUser($user_id)) return false;
+			if(is_numeric($group_id) || is_string($group_id)){
+				if(!in_array($group_id, $user->groups)){
+					$this->db->query("
+						INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
+					", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id ));
+				}
+			}elseif(is_array($group)){
+				foreach($group_id as $gid){
+					if(!in_array($gid, $user->groups)){
+						$this->db->query("
+							INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
+						", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id));
+					}
+				}
+			}
+			return true;
+		}
 		function login($email, $passwd){
 			if(!$email) return $this->response->setError('Please enter your username.');
 			if(!$passwd) return $this->response->setError('Please enter your password.');
@@ -159,12 +151,12 @@ namespace User\Service{
 					'last_activity' => $time
 				));
 			}
-
-			$user = Loader::get('User\Model\User', (array) $user);
+			
 			$sess = Session::getInstance();
 			$sess->restart();
+			$user = Loader::get('User\Model\User', (array) $user);
 			$sess->set('user',$user->properties());
-			App::dispatchEvent('User.Event.Login', $user, $this->response);
+			App::dispatchEvent('User.Login', false, $user);
 			return $this->response;
 		}
 		
