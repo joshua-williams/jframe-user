@@ -21,7 +21,7 @@ namespace User{
 				new RouteMap('user','User','User'),
 				new RouteMap('user/login','User','User','login'),
 				new RouteMap('user/forgot-username', 'User', 'User', 'forgotUsername', 'forgot-username'),
-				new RouteMap('user/forgot-password', 'User', 'User', 'forgotPassword', 'forgot-password'),
+				new RouteMap('user/forgot-password', 'User', 'User', 'forgotPassword', 'forgot-password'), 
 				new RouteMap('user/recover-password/:hash', 'User', 'User', 'recoverPassword', 'recover-password', '.*'),
 			);
 		}
