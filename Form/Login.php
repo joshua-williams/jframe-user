@@ -43,12 +43,6 @@ namespace User\Form{
 			$passwd = Vars::get('passwd');
 			$svc = Loader::get('User\Service\User');
 			$this->response = $svc->login($username, $passwd);
-			if($this->response->getErrors()){
-				die('bad login');
-			}else{
-				die('login successful');
-			}
-			exit;
 		}
 	}
 }

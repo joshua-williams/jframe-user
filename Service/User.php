@@ -45,7 +45,7 @@ namespace User\Service{
 				$user = (array) $user->properties();
 			}else{
 				$sess = Session::getInstance();
-				if(!$user = $sess->get('user')) return false;
+				if(!$user = (array) $sess->get('user')) return false;
 			}
 			
 			if(is_array($groups)){
@@ -156,7 +156,7 @@ namespace User\Service{
 			$sess->restart();
 			$user = Loader::get('User\Model\User', (array) $user);
 			$sess->set('user',$user->properties());
-			App::dispatchEvent('User.Login', false, $user);
+			App::dispatchEvent('User.Event.Login', $user, $this->response);
 			return $this->response;
 		}
 		
