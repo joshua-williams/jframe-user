@@ -62,7 +62,7 @@ $db->query("
 ");
 
 /////////// ADD CONSTANTS TO USER\MODULE ///////////////////
-$str = file_get_contents(PATH.'/modules/User/User.php');
+$str = file_get_contents(PATH_MODULE.'/User.php');
 $pattern = '/[\/]+DEFINE CONSTANTS(.*?)[\/]+END DEFINE CONSTANTS/s';
 preg_match($pattern, $str, $matches);
 $content = "
