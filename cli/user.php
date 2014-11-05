@@ -9,6 +9,14 @@ class CLI extends \JFrame\CLI{
 		
 	}
 	
+	function adduser(){
+		require_once(PATH_CLI . '/add_user.php');
+	}
+	
+	function deleteuser(){
+		require_once(PATH_CLI . '/delete_user.php');
+	}
+	
 	function changepwd(){
 		
 	}

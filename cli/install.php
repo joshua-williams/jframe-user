@@ -32,7 +32,7 @@ $dbConfig = (object) Config::get('databases')->application;
 $db = new JFrame\DB($dbConfig);
 if(!$db->has_connection) setError('Unable to connection to database. Please check your database config.');
 $db->query("
-	CREATE TABLE users(
+	CREATE TABLE IF NOT EXISTS users(
 		user_id INT(11) UNSIGNED AUTO_INCREMENT PRIMARY KEY,
 		first_name VARCHAR(45),
 		last_name VARCHAR(45),
@@ -54,13 +54,16 @@ $constant = (object) array(
 );
 
 $passwd = md5(Config::hash.$passwd);
-$db->query("
+$user_id = $db->query("
 	INSERT INTO users 
 		(first_name, last_name, email, passwd)
 	VALUES
 		('$first_name', '$last_name', '$email', '$passwd')
 ");
-
+$db->query("
+	INSERT INTO table_map (gt_id, src_id, rel_id)
+	VALUES (1, $user_id, $constant->WEBMASTER_UGID)
+");
 /////////// ADD CONSTANTS TO USER\MODULE ///////////////////
 $str = file_get_contents(PATH_MODULE.'/User.php');
 $pattern = '/[\/]+DEFINE CONSTANTS(.*?)[\/]+END DEFINE CONSTANTS/s';
