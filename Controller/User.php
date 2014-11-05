@@ -43,8 +43,8 @@ namespace User\Controller{
 		}
 		
 		function forgotPassword(){
-			//die('<xmp>'.print_r($this->route,1));
 			$form = Loader::get('User\Form\ForgotPassword');
+			App::dispatchEvent('User.Event.onLoadResetPasswordForm', $form, $this);
 			$this->assign('form', $form->render());
 		}
 		

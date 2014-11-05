@@ -156,6 +156,7 @@ namespace User\Service{
 			$sess->restart();
 			$user = Loader::get('User\Model\User', (array) $user);
 			$sess->set('user',$user->properties());
+			$this->response->setSuccess('Welcome back, '. $user->prop('first_name'));
 			App::dispatchEvent('User.Event.Login', $user, $this->response);
 			return $this->response;
 		}
