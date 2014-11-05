@@ -34,6 +34,7 @@ namespace User\Controller{
 		
 		function login(){
 			$form = Loader::get('User\Form\Login');
+			App::dispatchEvent('User.Event.onLoadLoginForm', $form, $this);
 			$this->addForm($form, 'form');
 		}
 		
@@ -42,7 +43,8 @@ namespace User\Controller{
 		}
 		
 		function forgotPassword(){
-			$form = Loader::getForm('ForgotPassword');
+			//die('<xmp>'.print_r($this->route,1));
+			$form = Loader::get('User\Form\ForgotPassword');
 			$this->assign('form', $form->render());
 		}
 		

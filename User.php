@@ -7,15 +7,15 @@ namespace User{
 	DEFINE('USER_ERROR_NOT_IN_GROUP', 'The user does not belong to the group(s)');
 	DEFINE('USER_ERROR_EXISTS', 'A user with this email already exists');
 	DEFINE('USER_GTID', 1);
-	//DEFINE CONSTANTS
+	
 	IF(!DEFINED('WEBMASTER_UGID')) DEFINE('WEBMASTER_UGID', 1);
 	IF(!DEFINED('SUPER_ADMIN_UGID')) DEFINE('SUPER_ADMIN_UGID', 2);
 	IF(!DEFINED('ADMIN_UGID')) DEFINE('ADMIN_UGID', 3);
-	//END DEFINE CONSTANTS
+
 	
 	class Module extends \JFrame\Module{
 		protected $events = array(
-			'Login',
+			'Login', 'onLoadLoginForm',
 		);
 		
 		public  function getRoutes(){

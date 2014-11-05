@@ -28,7 +28,7 @@ namespace User\Form{
 					'name' => 'passwd',
 					'label' => 'Password',
 					'placeholder' => 'Password',
-					'append_label' => '<a href="'.SITE_URL.'/user/forgor-password">Forgot Password?</a>',
+					'append_label' => '<a href="'.SITE_URL.'/user/forgot-password">Forgot Password?</a>',
 				),
 			));
 			
