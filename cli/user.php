@@ -18,7 +18,7 @@ class CLI extends \JFrame\CLI{
 	}
 	
 	function changepwd(){
-		
+		require_once(PATH_CLI . '/change_password.php');
 	}
 	
 	function install(){
