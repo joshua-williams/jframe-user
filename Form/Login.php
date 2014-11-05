@@ -13,8 +13,8 @@ namespace User\Form{
 		
 		function __construct(){
 			parent::__construct();
-			$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
-			$this->addJS($user_js, TRUE);
+			//$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
+			//$this->addJS($user_js, TRUE);
 			$this->addFields(array(
 				array(
 					'type' => 'text',
@@ -42,7 +42,8 @@ namespace User\Form{
 			$username = Vars::get('email');
 			$passwd = Vars::get('passwd');
 			$svc = Loader::get('User\Service\User');
-			$this->response = $svc->login($username, $passwd);
+			$response = $svc->login($username, $passwd);
+			$this->response = $response;
 		}
 	}
 }
