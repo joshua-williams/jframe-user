@@ -14,9 +14,7 @@ namespace User{
 	//END DEFINE CONSTANTS
 	
 	class Module extends \JFrame\Module{
-		protected $events = array(
-			'Login',
-		);
+		protected $events = array('Login', 'onLoadLoginForm', 'onLoadResetPasswordForm');
 		
 		public  function getRoutes(){
 			return array(
