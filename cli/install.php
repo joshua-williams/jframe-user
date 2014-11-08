@@ -65,7 +65,7 @@ $db->query("
 	VALUES (1, $user_id, $constant->WEBMASTER_UGID)
 ");
 /////////// ADD CONSTANTS TO USER\MODULE ///////////////////
-$str = file_get_contents(PATH_MODULE.'/User.php');
+$str = file_get_contents(PATH_MODULE.'/install/User.php');
 $pattern = '/[\/]+DEFINE CONSTANTS(.*?)[\/]+END DEFINE CONSTANTS/s';
 preg_match($pattern, $str, $matches);
 $content = "
