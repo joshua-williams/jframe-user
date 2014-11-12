@@ -64,7 +64,8 @@ namespace User\Controller{
 		}
 		
 		function logout(){
-			
+			$sess = \JFrame\Session::getInstance()->destroy();
+			App::redirect(SITE_URL . '/user/login');
 		}
 		
 		function authenticate(){

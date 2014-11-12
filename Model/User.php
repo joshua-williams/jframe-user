@@ -3,6 +3,7 @@
 namespace User\Model{
 	
 	class User extends \JFrame\Model{
+		protected $user_id;
 		protected $first_name;
 		protected $last_name;
 		protected $created;
