@@ -44,6 +44,9 @@ namespace User\Form{
 			$svc = Loader::get('User\Service\User');
 			$response = $svc->login($username, $passwd);
 			$this->response = $response;
+			if($return = Vars::get('return')){
+				$this->response->setReturn($return);
+			}
 		}
 	}
 }

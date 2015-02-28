@@ -17,25 +17,38 @@ namespace User\Service{
 		}
 		
 		function authorize($user_groups, $return=false){
+			if(is_string($user_groups)){
+				$user_groups = explode(',', $user_groups);
+				foreach($user_groups as $key=>$val){
+					$user_groups[$key] = trim($val);
+				}
+			}
+			
 			$sess = Session::getInstance();
 			if(!$user = $sess->get('user')){
 				if(!$return) return false;
 				App::redirect($return);
 			}
+			$userGroups = $this->db->loadObjectList("
+				SELECT group_id, title
+				FROM groups 
+				WHERE type_id = (SELECT id FROM group_types WHERE group_type='user')
+			");
 			
-			if(is_array($user_groups)){
-				foreach($user_groups as $group_id){
-					foreach($user['groups'] as $g){
-						if(in_array($g->group_id, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
-						if($g->group_id == $group_id) return $user;;
-					}
-				}
-			}elseif(is_string($user_groups)){
+			foreach(array('webmaster','super-admin','admin',1,2,3) as $group){
 				foreach($user['groups'] as $g){
-					if(in_array($user_groups, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
-					if($g->group_id == $user_groups) return $user;
+					if($g->group_id == $group) return $user;
+					if($g->group == $group) return $user;
 				}
 			}
+			
+			foreach($user_groups as $group){
+				foreach($user['groups'] as $g){
+					if($g->group_id == $group) return $user;
+					if($g->group == $group) return $user;
+				}
+			}
+			
 			if(!$return) return false;
 			App::redirect($return);
 		}
@@ -94,9 +107,9 @@ namespace User\Service{
 				SELECT g.group_id, g.title AS `group`
 				FROM table_map m
 					INNER JOIN groups g ON g.group_id = m.rel_id
-				WHERE m.gt_id = :USER_GTID
+				WHERE m.gt_id = (SELECT id FROM group_types WHERE group_type='user')
 					AND m.src_id = :user_id
-			", array('user_id'=>$user_id, 'USER_GTID'=>USER_GTID)); 
+			", array('user_id'=>$user_id)); 
 		}
 		
 		function addUserToGroup($user_id, $group_id){
@@ -104,15 +117,15 @@ namespace User\Service{
 			if(is_numeric($group_id) || is_string($group_id)){
 				if(!in_array($group_id, $user->groups)){
 					$this->db->query("
-						INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
-					", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id ));
+						INSERT INTO table_map (gt_id, src_id, rel_id) VALUES ((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+					", array( 'src_id' => $user->user_id, 'rel_id' => $group_id ));
 				}
 			}elseif(is_array($group)){
 				foreach($group_id as $gid){
 					if(!in_array($gid, $user->groups)){
 						$this->db->query("
-							INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
-						", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id));
+							INSERT INTO table_map (gt_id, src_id, rel_id) VALUES ((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+						", array( 'src_id' => $user->user_id, 'rel_id' => $group_id));
 					}
 				}
 			}
@@ -200,9 +213,8 @@ namespace User\Service{
 				INSERT INTO table_map 
 					(gt_id, group_id, rel_id)
 				VALUES
-					(:USER_GT_ID, :SSB_UGID, :user_id)
+					((SELECT id FROM group_types WHERE group_type='user'), :SSB_UGID, :user_id)
 			", array(
-				'USER_GT_ID' => USER_GT_ID,
 				'SSB_UGID' => SSB_UGID,
 				'user_id' => $user_id
 			));
