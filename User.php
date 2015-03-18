@@ -15,7 +15,7 @@ namespace User{
 	
 	class Module extends \JFrame\Module{
 		protected $events = array('Login', 'onLoadLoginForm', 'onLoadResetPasswordForm');
-				
+		
 		public  function getRoutes(){
 			return array(
 				new RouteMap('user','User','User'),

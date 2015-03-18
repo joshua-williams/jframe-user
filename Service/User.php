@@ -22,18 +22,20 @@ namespace User\Service{
 				if(!$return) return false;
 				App::redirect($return);
 			}
+			$groups = $this->db->loadObjectList("SELECT group_id,title FROM groups WHERE type_id = (SELECT id FROM group_types WHERE group_type='user') AND disabled=0");
+			
+			if($this->inGroup('webmaster')) return $user;
 			
 			if(is_array($user_groups)){
 				foreach($user_groups as $group_id){
 					foreach($user['groups'] as $g){
-						if(in_array($g->group_id, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
 						if($g->group_id == $group_id) return $user;;
 					}
 				}
 			}elseif(is_string($user_groups)){
 				foreach($user['groups'] as $g){
-					if(in_array($user_groups, array(WEBMASTER_UGID, SUPER_ADMIN_UGID, ADMIN_UGID))) return $user;
 					if($g->group_id == $user_groups) return $user;
+					if($g->group == $user_groups) return $user;
 				}
 			}
 			if(!$return) return false;
@@ -52,11 +54,13 @@ namespace User\Service{
 				foreach($user['groups'] as $group){
 					foreach($groups as $_group){
 						if($group->group_id == $_group) return true;
+						if($group->group == $_group) return true;
 					}
 				}
 			}else{
 				foreach($user['groups'] as $group){
 					if($group->group_id == $groups) return true;
+					if($group->group == $groups) return true;
 				}
 			}
 			return false;
@@ -94,9 +98,9 @@ namespace User\Service{
 				SELECT g.group_id, g.title AS `group`
 				FROM table_map m
 					INNER JOIN groups g ON g.group_id = m.rel_id
-				WHERE m.gt_id = :USER_GTID
+				WHERE m.gt_id = (SELECT id FROM group_types WHERE group_type='user')
 					AND m.src_id = :user_id
-			", array('user_id'=>$user_id, 'USER_GTID'=>USER_GTID)); 
+			", array('user_id'=>$user_id)); 
 		}
 		
 		function addUserToGroup($user_id, $group_id){
@@ -104,15 +108,21 @@ namespace User\Service{
 			if(is_numeric($group_id) || is_string($group_id)){
 				if(!in_array($group_id, $user->groups)){
 					$this->db->query("
-						INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
-					", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id ));
+						INSERT INTO table_map 
+							(gt_id, src_id, rel_id) 
+						VALUES 
+						((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+					", array( 'src_id' => $user->user_id, 'rel_id' => $group_id ));
 				}
 			}elseif(is_array($group)){
 				foreach($group_id as $gid){
 					if(!in_array($gid, $user->groups)){
 						$this->db->query("
-							INSERT INTO table_map (gt_id, src_id, rel_id) VALUES (:gt_id, :src_id, :rel_id)
-						", array( 'gt_id' => USER_GTID, 'src_id' => $user->user_id, 'rel_id' => $group_id));
+							INSERT INTO table_map 
+								(gt_id, src_id, rel_id) 
+							VALUES 
+								((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+						", array( 'src_id' => $user->user_id, 'rel_id' => $group_id));
 					}
 				}
 			}
@@ -129,6 +139,7 @@ namespace User\Service{
 				return $this->response->setError('You have made too many login attempts.');
 			}
 			$passwd = md5(Config::hash.$passwd);
+			
 			if($user->passwd != $passwd){
 				$this->db->query("
 					UPDATE users SET login_attempts=:login_attempts, last_activity=:last_activity WHERE user_id=:user_id
