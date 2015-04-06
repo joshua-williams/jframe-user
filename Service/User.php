@@ -16,7 +16,7 @@ namespace User\Service{
 			$this->response = Loader::get('JFrame\Response');
 		}
 		
-		function authorize($user_groups, $return=false){
+		function authorize($user_groups=false, $return=false){
 			$sess = Session::getInstance();
 			if(!$user = $sess->get('user')){
 				if(!$return) return false;
