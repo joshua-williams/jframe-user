@@ -15,44 +15,33 @@ namespace User\Service{
 			parent::__construct();
 			$this->response = Loader::get('JFrame\Response');
 		}
-		
-		function authorize($user_groups, $return=false){
-			if(is_string($user_groups)){
-				$user_groups = explode(',', $user_groups);
-				foreach($user_groups as $key=>$val){
-					$user_groups[$key] = trim($val);
-				}
-			}
-			
+
+			function authorize($user_groups=false, $return=false){
 			$sess = Session::getInstance();
 			if(!$user = $sess->get('user')){
 				if(!$return) return false;
 				App::redirect($return);
 			}
-			$userGroups = $this->db->loadObjectList("
-				SELECT group_id, title
-				FROM groups 
-				WHERE type_id = (SELECT id FROM group_types WHERE group_type='user')
-			");
+			$groups = $this->db->loadObjectList("SELECT group_id,title FROM groups WHERE type_id = (SELECT id FROM group_types WHERE group_type='user') AND disabled=0");
 			
-			foreach(array('webmaster','super-admin','admin',1,2,3) as $group){
+			if($this->inGroup('webmaster')) return $user;
+			
+			if(is_array($user_groups)){
+				foreach($user_groups as $group_id){
+					foreach($user['groups'] as $g){
+						if($g->group_id == $group_id) return $user;;
+					}
+				}
+			}elseif(is_string($user_groups)){
 				foreach($user['groups'] as $g){
-					if($g->group_id == $group) return $user;
-					if($g->group == $group) return $user;
+					if($g->group_id == $user_groups) return $user;
+					if($g->group == $user_groups) return $user;
 				}
 			}
-			
-			foreach($user_groups as $group){
-				foreach($user['groups'] as $g){
-					if($g->group_id == $group) return $user;
-					if($g->group == $group) return $user;
-				}
-			}
-			
 			if(!$return) return false;
 			App::redirect($return);
 		}
-		
+				
 		public function inGroup($groups, $user=false){
 			if($user){
 				$user = (array) $user->properties();
@@ -65,11 +54,13 @@ namespace User\Service{
 				foreach($user['groups'] as $group){
 					foreach($groups as $_group){
 						if($group->group_id == $_group) return true;
+						if($group->group == $_group) return true;
 					}
 				}
 			}else{
 				foreach($user['groups'] as $group){
 					if($group->group_id == $groups) return true;
+					if($group->group == $groups) return true;
 				}
 			}
 			return false;
@@ -112,25 +103,32 @@ namespace User\Service{
 			", array('user_id'=>$user_id)); 
 		}
 		
-		function addUserToGroup($user_id, $group_id){
+			function addUserToGroup($user_id, $group_id){
 			if(!$user = $this->getUser($user_id)) return false;
 			if(is_numeric($group_id) || is_string($group_id)){
 				if(!in_array($group_id, $user->groups)){
 					$this->db->query("
-						INSERT INTO table_map (gt_id, src_id, rel_id) VALUES ((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+						INSERT INTO table_map 
+							(gt_id, src_id, rel_id) 
+						VALUES 
+						((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
 					", array( 'src_id' => $user->user_id, 'rel_id' => $group_id ));
 				}
 			}elseif(is_array($group)){
 				foreach($group_id as $gid){
 					if(!in_array($gid, $user->groups)){
 						$this->db->query("
-							INSERT INTO table_map (gt_id, src_id, rel_id) VALUES ((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
+							INSERT INTO table_map 
+								(gt_id, src_id, rel_id) 
+							VALUES 
+								((SELECT id FROM group_types WHERE group_type='user'), :src_id, :rel_id)
 						", array( 'src_id' => $user->user_id, 'rel_id' => $group_id));
 					}
 				}
 			}
 			return true;
 		}
+
 		function login($email, $passwd){
 			if(!$email) return $this->response->setError('Please enter your username.');
 			if(!$passwd) return $this->response->setError('Please enter your password.');
@@ -142,6 +140,7 @@ namespace User\Service{
 				return $this->response->setError('You have made too many login attempts.');
 			}
 			$passwd = md5(Config::hash.$passwd);
+			
 			if($user->passwd != $passwd){
 				$this->db->query("
 					UPDATE users SET login_attempts=:login_attempts, last_activity=:last_activity WHERE user_id=:user_id
