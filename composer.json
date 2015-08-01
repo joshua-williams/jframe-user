@@ -1,6 +1,6 @@
 {
 	"name": "jframe/user",
-	"type" 'jframe-module",
+	"type": 'jframe-module",
 	"require": {
 		"composer/installers": "~1.0"
 	},
