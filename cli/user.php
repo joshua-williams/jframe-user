@@ -1,7 +1,7 @@
 #!/usr/bin/php5
 <?php
 
-require_once(dirname(dirname(dirname(__DIR__))). "/vendor/jframe/lib/CLI.php");
+require_once(dirname(dirname(dirname(__DIR__))). "/swfx/jframe/lib/CLI.php");
 
 class CLI extends \JFrame\CLI{
 	
@@ -10,19 +10,19 @@ class CLI extends \JFrame\CLI{
 	}
 	
 	function adduser(){
-		require_once(PATH_CLI . '/add_user.php');
+		require_once("$this->path/cli/add_user.php");
 	}
 	
 	function deleteuser(){
-		require_once(PATH_CLI . '/delete_user.php');
+		require_once("$this->path/cli/delete_user.php");
 	}
 	
 	function changepwd(){
-		require_once(PATH_CLI . '/change_password.php');
+		require_once("$this->path/cli/change_password.php");
 	}
 	
 	function install(){
-		require_once(PATH_CLI.'/install.php');
+		require_once("$this->path/cli/install.php");
 		
 	}
 }
