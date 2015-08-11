@@ -7,35 +7,37 @@ namespace User\Form{
 	use \App;
 	
 	class Login extends \JFrame\Form{
-		protected $class = 'login';
-		protected $submit = 'Login';
-		protected $return = 'user';
 		
 		function __construct(){
-			parent::__construct();
-			//$user_js = file_get_contents(PATH_MOD. '/User/assets/js/user.js');
-			//$this->addJS($user_js, TRUE);
-			$this->addFields(array(
+			$this->attr('name', 'user-login');
+			$this->prop('type', 'div');
+		}
+		
+		protected function fields(){
+			return array(
+				
 				array(
 					'type' => 'text',
 					'name' => 'email',
 					'label' => 'Username',
-					'placeholder' => 'myemail@address.com',
+					'class' => 'form-control',
+					'placeholder' => 'Email Address',
 				),
 				
 				array(
 					'type' => 'password',
 					'name' => 'passwd',
 					'label' => 'Password',
+					'class' => 'form-control',
 					'placeholder' => 'Password',
-					'append_label' => '<a href="'.SITE_URL.'/user/forgot-password">Forgot Password?</a>',
 				),
-			));
-			
-			$this->addControl(array(
-				'type' => 'submit',
-				'label' => 'Login'
-			));
+				array(
+					'type' => 'submit',
+					'value' => 'Login',
+					'label' => '&nbsp;',
+					'class' => 'btn btn-primary'
+				),
+			);
 		}
 		
 		function action(){
