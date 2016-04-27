@@ -1,4 +1,4 @@
-#!/usr/bin/php5
+#!/usr/bin/env php
 <?php
 
 require_once(dirname(dirname(dirname(__DIR__))). "/swfx/jframe/lib/CLI.php");

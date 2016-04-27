@@ -49,6 +49,7 @@ namespace User\Form{
 			if($return = Vars::get('return')){
 				$this->response->setReturn($return);
 			}
+			return $this->response;
 		}
 	}
 }
