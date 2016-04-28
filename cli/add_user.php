@@ -5,8 +5,8 @@ require_once(PATH_JFRAME.'/lib/Vars.php');
 
 if(!is_file("config/databases.php")) $this->setError('Config not found. Please run command from application root');
 $dbConfig = include("config/databases.php");
-$config = include("config/config.php");
-$hash = $config['hash'];
+$userConfig = include("config/user.php");
+$hash = $userConfig['hash'];
 if(!is_array($dbConfig)) $this->setError('Invalid database config.');
 $db = new JFrame\DB($dbConfig['default']);
 
