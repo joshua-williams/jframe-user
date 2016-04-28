@@ -1,10 +1,14 @@
 <?php
 
 require_once(PATH_JFRAME.'/lib/DB.php');
-require_once(PATH_CONFIG.'/config.php');
+require_once(PATH_JFRAME.'/lib/Vars.php');
 
-$dbConfig = (object) Config::get('databases')->application;
-$db = new JFrame\DB($dbConfig);
+if(!is_file("config/databases.php")) $this->setError('Config not found. Please run command from application root');
+$dbConfig = include("config/databases.php");
+$config = include("config/config.php");
+$hash = $config['hash'];
+if(!is_array($dbConfig)) $this->setError('Invalid database config.');
+$db = new JFrame\DB($dbConfig['default']);
 
 $user['email'] = $this->getResponse('Email Address');
 if(!$user['email']) $this->setError('User must have an email address');
@@ -13,7 +17,7 @@ if($exists) $this->setError('User already exists.');
 $user['first_name'] = $this->getResponse('First Name');
 $user['last_name'] = $this->getResponse('Last Name');
 $user['passwd'] = $this->getResponse('Password');
-$user['passwd'] = md5(Config::hash.$user['passwd']);
+$user['passwd'] = md5($hash.$user['passwd']);
 
 $userGroups = $db->loadResult("
 	SELECT GROUP_CONCAT(group_id, ' - ', title, '\n' SEPARATOR '') FROM groups WHERE type_id = 1 AND title != 'webmaster'

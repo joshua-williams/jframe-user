@@ -49,6 +49,7 @@ namespace User\Form{
 			if($return = Vars::get('return')){
 				$this->response->setReturn($return);
 			}
+			die('<xmp>'.print_r($this->response,1));
 			return $this->response;
 		}
 	}
