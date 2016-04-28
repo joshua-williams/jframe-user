@@ -28,7 +28,7 @@ namespace User\Service{
 						if($g->group_id == $group_id) return $user;;
 					}
 				}
-			}elseif(is_string($user_groups)){
+			}elseif(is_string($user_groups) || is_numeric($user_groups)){
 				foreach($user['groups'] as $g){
 					if($g->group_id == $user_groups) return $user;
 					if($g->group == $user_groups) return $user;
