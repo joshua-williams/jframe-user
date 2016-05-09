@@ -13,6 +13,12 @@ namespace User\Service{
 			$this->config = App::getConfig('user', 'object');
 		}
 		
+		function getUsers(){
+			return $this->db->loadObjectList("
+				SELECT user_id, first_name, last_name, email, created FROM users		
+			");
+		}
+		
 		function authorize($user_groups=false, $return=false){
 			if(!$user = $this->app->session->get('user')){
 				if(!$return) return false;
