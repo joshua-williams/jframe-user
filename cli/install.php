@@ -13,7 +13,9 @@ if($db->table_exists('users')){
 	$this->setError('User module failed to install. User table already exists');
 }
 if(file_exists('config/user.php')){
-	$this->setError('User module failed to install.  User config already exists');
+	$override = ($this->getResponse('User config already exists. Do you want to override it? (y/n)') == 'y') ? true : false;
+	if(!$override) return false;
+	//$this->setError('User module failed to install.  User config already exists');
 }
 $config['hash'] = \JFrame\Util::generateKey();
 $config['max_login_attempts'] = $this->getResponse("Maximum login attempts");
