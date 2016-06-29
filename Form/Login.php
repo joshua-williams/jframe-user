@@ -5,7 +5,8 @@ namespace User\Form{
 	use \JFrame\Loader;
 	use \Config;
 	use \App;
-	
+	ini_set('error_reporting', E_ALL);
+	ini_set('display_errors', 1);
 	class Login extends \JFrame\Form{
 		
 		function __construct(){

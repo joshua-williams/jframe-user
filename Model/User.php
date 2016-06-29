@@ -9,6 +9,7 @@ namespace User\Model{
 		protected $created;
 		protected $email;
 		protected $groups;
+		protected $passwd;
 		
 		function __construct($properties=false){
 			parent::__construct($properties);
